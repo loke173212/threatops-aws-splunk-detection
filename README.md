@@ -1,0 +1,1 @@
+# threatops-aws-splunk-detection
