@@ -179,9 +179,10 @@ index="project" sourcetype="_json" action=REJECT
 
 ## ✅ Results
 
-- Identified the attacker's source IP address.
-- Detected multiple failed attempts to SSH on port 22.
-- Confirmed successful log ingestion and near real-time pipeline.
+-🕵️ Successfully identified malicious source IPs involved in SSH brute-force attempts.
+-🔒 Detected multiple unauthorized login failures targeting port 22 using real-time log analysis.
+-🚀 Verified seamless, near real-time log ingestion from AWS EC2 to Splunk via Lambda and Cloudflared tunnel.
+-📊 Built visual dashboards in Splunk to highlight attack patterns using tables and pie charts.
 
 ---
 
@@ -195,13 +196,19 @@ index="project" sourcetype="_json" action=REJECT
 
 ## 💡 Takeaways
 
-- Built an end-to-end detection pipeline from scratch.
-- Gained practical experience with log forwarding, real-time alerting, and SPL analysis.
-- Simulated real-world brute-force attacks and validated detection effectiveness.
+- 🌐 Designed and deployed a real-time threat detection pipeline leveraging cloud-native services and industry SIEM tooling.
+-🧠 Gained in-depth experience with AWS CloudWatch Agent, Lambda log forwarding, and Splunk HEC integration.
+-🔧 Solved a real-world challenge: forwarding Linux auth logs from a cloud to a locally hosted SIEM (Splunk) — overcoming tunneling limitations (Cloudflared).
+-🧰 Developed and debugged infrastructure hands-on — from EC2 provisioning to log parsing using rex and SPL queries in Splunk.
+-🔍 Enhanced my skills in detection engineering, threat simulation (Hydra, Nmap), and analysis of structured/unstructured log data.
 
 ---
 
 ## ✅ Project Completion Summary
 
-- ✅ Real-time SSH Attack Detection Implemented
-- ✅ Logs Flowing from EC2 → CloudWatch → Lambda → Splunk
+- ❗ Problem: SSH brute-force attacks are common and often go undetected without proper logging and real-time monitoring.
+-✅ Solution: Built an end-to-end detection lab simulating SSH brute-force attacks and detecting them via live log ingestion from EC2 to Splunk.
+-✅ Designed secure architecture using AWS EC2, CloudWatch, Lambda, and Splunk.
+-✅ Created a reliable pipeline that monitors Linux authentication logs in real-time.
+-✅ Achieved accurate detection of brute-force patterns and high-frequency attacker IPs.
+-✅ Overcame S3 export limitations and built a real-time tunnel to a local SIEM for seamless log transfer.
