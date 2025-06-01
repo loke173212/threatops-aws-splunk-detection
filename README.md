@@ -4,27 +4,112 @@ A hands-on cybersecurity project to simulate and detect SSH brute-force attacks 
 
 ---
 
-## 🛠 Phase 1: Infrastructure Setup
+## 🛠 Phase 1: Infrastructure Setup (with Commands)
 
-### ✅ EC2 Instance Setup
-- Launched a `t2.micro` Ubuntu EC2 instance in the `ap-south-1` region.
-- Configured with a security group to allow SSH (port 22).
-- Created and attached a key pair (PEM file) to access the instance via SSH.
+### ✅ EC2 Instance Setup (Amazon Linux 2023)
 
-### ✅ CloudWatch Configuration
-- Installed and configured the Amazon CloudWatch Agent on the EC2 instance.
-- Created a CloudWatch Log Group `ThreatOpsEC2Logs` to receive log data.
-- Configured the agent to forward logs from `/var/log/secure`.
+#### 1. Create Key Pair
+```bash
+aws ec2 create-key-pair   --key-name threatops-key   --query 'KeyMaterial'   --output text > threatops-key.pem
 
-### ✅ Lambda Setup
-- Created an AWS Lambda function (Python) to fetch logs from CloudWatch in real time.
-- Integrated the Lambda function with CloudWatch Log Group using triggers.
+chmod 400 threatops-key.pem
+```
 
-### ✅ Splunk HEC and Tunneling
-- Installed Splunk Enterprise on the local Windows machine.
-- Enabled HTTP Event Collector (HEC); created a token `ThreatOpsCloudWatch`.
-- Used `Cloudflared` to expose local Splunk HEC (port 8088).
-- Lambda used the tunnel URL as the `SPLUNK_HEC_URL` to forward logs.
+#### 2. Create Security Group and Allow SSH
+```bash
+aws ec2 create-security-group   --group-name allow-ssh   --description "Allow SSH"
+
+aws ec2 authorize-security-group-ingress   --group-name allow-ssh   --protocol tcp   --port 22   --cidr 0.0.0.0/0
+```
+
+#### 3. Launch EC2 Instance
+```bash
+aws ec2 run-instances   --image-id ami-0a0f1259dd1c90938 \  # Amazon Linux 2023 (ap-south-1)
+  --count 1   --instance-type t2.micro   --key-name threatops-key   --security-groups allow-ssh
+```
+
+#### 4. SSH into the Instance
+```bash
+ssh -i "threatops-key.pem" ec2-user@<EC2_PUBLIC_IP>
+```
+
+---
+
+### ✅ CloudWatch Agent Setup (Amazon Linux)
+
+#### 1. Install and Enable rsyslog (if not available)
+```bash
+sudo yum install -y rsyslog
+sudo systemctl enable --now rsyslog
+```
+
+#### 2. Install CloudWatch Agent
+```bash
+sudo yum install -y amazon-cloudwatch-agent
+```
+
+#### 3. Create Config File
+Path: `/opt/aws/amazon-cloudwatch-agent/etc/cloudwatch-config.json`
+```json
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/secure",
+            "log_group_name": "ThreatOpsEC2Logs",
+            "log_stream_name": "{instance_id}/secure",
+            "timestamp_format": "%b %d %H:%M:%S"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+#### 4. Start CloudWatch Agent
+```bash
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/opt/aws/amazon-cloudwatch-agent/etc/cloudwatch-config.json   -s
+```
+
+---
+
+### ✅ Splunk HEC Configuration (Windows)
+
+#### 1. Login to Splunk Web at `http://localhost:8000`
+
+#### 2. Go to:
+**Settings** → **Data Inputs** → **HTTP Event Collector**
+
+#### 3. Steps:
+- Click **New Token**
+- **Name:** `ThreatOpsCloudWatch`
+- Source type: `linux_secure`
+- Index: `project` (or `main`)
+- Leave port: `8088`
+- Enable SSL if needed
+
+#### 4. Save the **Token Value** (e.g., `cdcf73ab-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+
+---
+
+### ✅ Tunneling Splunk HEC to the Internet (Cloudflared)
+
+```powershell
+cloudflared tunnel --url http://localhost:8088
+```
+
+Tunnel URL (example):
+```
+https://<cloudflare_link>
+```
+
+Use the HEC endpoint in Lambda:
+```
+https://<cloudflare_link>/services/collector
+```
 
 ---
 
